@@ -1,0 +1,90 @@
+---
+title: "Gender Bias in Florida State Government Salaries"
+author: "Charles McGuinness"
+date: "December 7, 2014"
+output: html_document
+---
+
+## Overview
+
+There is a general belief by some that there is a persistent bias in the wages paid to male vs. female workers.  Many
+stats are tossed around, all of which reflect the point of view and advocacy of the presenters.  Frequently, it is very
+hard to provide a solid statistical answer to the question for a variety of reasons:
+
+* Solid data is hard to come by
+* There is no consensus on what basis to compare salaries
+* There is no consensus on what factors to control for
+* There is a desire to explain why any differences appear, which gets back to the point of view issues
+
+The State of Florida provides a complete, downloadable database of its payroll, which makes the first problem easier to solve.
+This analysis looks at this data and attempts to address the subsequent points.
+
+I do not take a position as to whether there is or is not inherent gender bias in the state's payroll.  But I do believe that
+I will show that there is a reasonable question about that.
+
+## Analysis Process
+
+The State of Florida provide weekly salary updates on its official site at http://dmssalaries.herokuapp.com/salaries .  There, you
+can download the complete payroll ("Export All Salaries").  The analysis loads this data and enriches it.  The enrichment takes two steps:
+
+1. It converts the string form of the pay to numerical form
+2. It estimates the gender of each employee
+
+### Estimating Gender
+
+Since the question at hand is the pay differences for men and women, a key piece of information is knowing which employees are
+male and which are female.  That data, however, is not present in the data downloaded from the state.  Thus, we have to estimate
+the sex of each employee from their name and, specifically, their first name.
+
+This is not quite as hard as it seems.  The Social Security Administration publishes lists of the 1000 most popular baby names for each
+year along with the sex of name.  By downloading this data and aggregating it across the years, we can come up with a very comprehensive
+list of names.  This database contains the following # of unique names:
+
+```{r loadNames, echo=FALSE}
+source('getNamesSimple.R')
+getNamesSimple()
+data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
+```
+
+The next step is to assign the genders to the employees.  For each name, we have a count of the number of babies born with it
+as a male name and as a female name.  For example, for Charles, my name:
+
+```{r charles_example, echo=FALSE}
+  pos <- match("charles", firstNames$names)
+  data.frame(Male_Charles = firstNames$males[pos], Female_Charles = firstNames$females[pos])
+```
+
+That's pretty definitive.  But for other names, like "Pat", not so much:
+
+```{r pat_example, echo=FALSE}
+  pos <- match("pat", firstNames$names)
+  data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos])
+```
+
+Our standard rule is that 90% or more of the babies with a given name have to be male (or female) for us to decide the name is unambiguous.
+There's a little room for error, but not much.  But if a name falls inbetween, we declare it to be androgenous (like "Pat"), and if
+we just don't have the name in our database, well, we just don't know.  Fortunately, the vast majority of employees can be
+assigned a gender:
+
+```{r salaries_gender, echo=FALSE}
+source('Salaries.R')
+getSalaries()
+data.frame(Males = sum(salaries$gender=="M"), 
+           Females = sum(salaries$gender=="F"), 
+           Androgenous = sum(salaries$gender=="A"), 
+           Unknown = sum(salaries$gender=="U"))
+```
+
+We could loosen the 90% restriction (perhaps to 80%) to move a few more androgenous names into definitive ones, but I do not think
+the trade-off is worthwhile.
+
+## Basic Analysis
+
+The first way to look at the data is at men and women across the board.  Let's look at the pay for salaried, full time employees.
+
+```{r histogram, echo=FALSE}
+coreSalaries <- salaries[(salaries$Full.Part.Time=="Full Time") & (salaries$Employee.Type == "Salaried"),]
+par(mfrow=c(1,2))
+hist(coreSalaries$nSalary[coreSalaries$gender=="M"], xlim = c(0,300000), breaks=20, ylim=c(0,20000), main="Male Employees", xlab="Salary")
+hist(coreSalaries$nSalary[coreSalaries$gender=="F"], xlim = c(0,300000), breaks=20, ylim=c(0,20000), main="Female Employees", xlab="Salary")
+```
