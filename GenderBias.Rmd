@@ -273,3 +273,6 @@ some of which are a result of bias and some that are not.
 However, the one thing that seems clear is that the payroll data itself does not offer us proof of a gender pay gap,
 and, in fact, suggests the State of Florida appears to be doing a good job of ensuring that men and women doing the
 same work are getting paid the same.
+
+You can download, run, and modify the complete sources for this analysis on
+[Github](https://github.com/cmcguinness/Florida-State-Gender-Pay-Gap)
