@@ -1,44 +1,62 @@
 ---
-title: "Gender Bias in Florida State Government Salaries"
-author: "Charles McGuinness"
-date: "December 7, 2014"
-output: html_document
+title: "Is there a Gender Pay Gap in the Florida's Government?"
+output: 
+  html_document:
+    theme: journal
 ---
 
-## Overview
+### An analysis of Florida's State Payroll
+#### `r format(Sys.time(), "%B %d, %Y")`
+### Charles McGuinness
+#### charles@mcguinness.us
 
-There is a general belief by some that there is a persistent bias in the wages paid to male vs. female workers.  Many
-stats are tossed around, all of which reflect the point of view and advocacy of the presenters.  Frequently, it is very
-hard to provide a solid statistical answer to the question for a variety of reasons:
+## Introduction
 
-* Solid data is hard to come by
-* There is no consensus on what basis to compare salaries
-* There is no consensus on what factors to control for
-* There is a desire to explain why any differences appear, which gets back to the point of view issues
+There is a general consensus that there is a persistent bias in the wages paid to male vs. female workers in the USA. 
+According to the [Bureau of Labor Statistics](http://www.bls.gov/cps/wlf-databook-2011.pdf),
+women in America make, on average, 81 cents for every dollar a man makes.  Many
+[reasons for the gap](http://en.wikipedia.org/wiki/Male%E2%80%93female_income_disparity_in_the_United_States#Sources_of_the_gender_gap)
+have been suggested, some of which are related to the different choice of careers made by men and women,
+and some reasons which are attributed to outright discrimination.
 
-The State of Florida provides a complete, downloadable database of its payroll, which makes the first problem easier to solve.
-This analysis looks at this data and attempts to address the subsequent points.
+Part of the challenge of understanding the pay gap is that it's hard to get good, comprehensive data on jobs and pay.
+Researchers often rely on [surveys](http://psidonline.isr.umich.edu/) to discern trends and deduce reasons.  But the
+use of incomplete data leads to interpretation and opens the door to the subjective bias of the researcher.
 
-I do not take a position as to whether there is or is not inherent gender bias in the state's payroll.  But I do believe that
-I will show that there is a reasonable question about that.
+The state of Florida offers us an opportunity to do a more objective analysis, as it provides a complete, downloadable 
+database of its payroll as part of the open government program. By looking at this data, we can examine the 
+question of gender bias in the Florida state government, and start to answer the question of whether Florida has a gender pay gap.
+I write "start", because a a better answer to the question requires far more research and analysis that I (and maybe anyone)
+am capable of. However, we can at least see if there is prima facie evidence of bias and start to see the dimensions of the issue.
 
 ## Analysis Process
 
-The State of Florida provide weekly salary updates on its official site at http://dmssalaries.herokuapp.com/salaries .  There, you
-can download the complete payroll ("Export All Salaries").  The analysis loads this data and enriches it.  The enrichment takes two steps:
+The State of Florida provide weekly salary updates on its [official site](http://dmssalaries.herokuapp.com/salaries). There, you
+can download the complete payroll ("Export All Salaries").  This report starts with this data and then enriches it to prepare
+for the analysis.
 
-1. It converts the string form of the pay to numerical form
-2. It estimates the gender of each employee
+The enrichment takes two steps:
 
-### Estimating Gender
+1. Some simple clean up of the data (trivial)
+2. Estimating the gender of each employee (non-trivial)
+
+With the enriched data, this report looks at gender differences across the entire state, as well as differences within each 
+job classification.  For the purposes of this analysis, only employees who are full-time and salaried were 
+looked at (a vast majority of state employees), to order to avoid distortions caused by part-time work or the variable
+pay earned by hourly workers (because of differences in hours worked).
+
+### A Word about Estimating Gender
 
 Since the question at hand is the pay differences for men and women, a key piece of information is knowing which employees are
-male and which are female.  That data, however, is not present in the data downloaded from the state.  Thus, we have to estimate
-the sex of each employee from their name and, specifically, their first name.
+male and which are female.  That information, however, is not present in the data downloaded from the state.
+Thus, the first step of the analysis is to estimate the gender of each employee from their first name.
 
-This is not quite as hard as it seems.  The Social Security Administration publishes lists of the 1000 most popular baby names for each
-year along with the sex of name.  By downloading this data and aggregating it across the years, we can come up with a very comprehensive
-list of names.  This database contains the following # of unique names:
+The actual mapping of first names to gender is a fairly straight-forward process, driven by a database of names.
+The source of this database is a Social Security Administration published lists of the 1000 most popular baby names from each
+year along with the sex of name.  By downloading this data and aggregating it across the years,
+one can build up with a very comprehensive list of names.  
+
+For this analysis, names from 1945 to 2013 were used, giving a database with the following # of unique names:
 
 ```{r loadNames, echo=FALSE}
 source('getNamesSimple.R')
@@ -46,8 +64,9 @@ getNamesSimple()
 data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
 ```
 
-The next step is to assign the genders to the employees.  For each name, we have a count of the number of babies born with it
-as a male name and as a female name.  For example, for Charles, my name:
+The list of names requires a bit of processing, as it turns out that many first names have been given to both male and
+female babies.  Usually, there is such an overwhelming trend in the use that the name is unambiguously male or female.
+For example, for Charles, my name, the counts of male vs. female babies:
 
 ```{r charles_example, echo=FALSE}
   pos <- match("charles", firstNames$names)
@@ -61,10 +80,18 @@ That's pretty definitive.  But for other names, like "Pat", not so much:
   data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos])
 ```
 
-Our standard rule is that 90% or more of the babies with a given name have to be male (or female) for us to decide the name is unambiguous.
-There's a little room for error, but not much.  But if a name falls inbetween, we declare it to be androgenous (like "Pat"), and if
-we just don't have the name in our database, well, we just don't know.  Fortunately, the vast majority of employees can be
-assigned a gender:
+For this analysis, I have used a rule that 90% or more of the babies with a given name have to be male (or female)
+to decide the name is unambiguously male or female.
+There's a little room for error (at worst, a 10% chance of misidentification), but that's going to affect only a very
+small number of names on the edge.  But if a name falls below 90% male or female, I declare it to be androgynous (like
+"Pat" is).
+If the database doesn't have the name, I try a few simple transformations to find it.  For example, sometimes the first
+name field in the employee data has both the first and middle name in it; so when I find a compound name I test each
+component of it.  "Mary Grace" may not be in the database, but "Mary" is.
+
+There are some names that remain where we just don't know.  Lots of initials are in the database.  Other names are very rare
+or have spelling variations not recognized. Fortunately, the vast majority of employees can be
+assigned a gender.  Here are the final counts:
 
 ```{r salaries_gender, echo=FALSE}
 source('Salaries.R')
@@ -75,16 +102,174 @@ data.frame(Males = sum(salaries$gender=="M"),
            Unknown = sum(salaries$gender=="U"))
 ```
 
-We could loosen the 90% restriction (perhaps to 80%) to move a few more androgenous names into definitive ones, but I do not think
-the trade-off is worthwhile.
+We could loosen the 90% restriction (perhaps to 80%) to move a few more androgynous names into definitive ones, but I do not think
+the trade-off is beneficial
 
-## Basic Analysis
+## First, Simple Analysis
 
 The first way to look at the data is at men and women across the board.  Let's look at the pay for salaried, full time employees.
 
-```{r histogram, echo=FALSE}
+```{r histogram, echo=FALSE, cache=TRUE}
 coreSalaries <- salaries[(salaries$Full.Part.Time=="Full Time") & (salaries$Employee.Type == "Salaried"),]
 par(mfrow=c(1,2))
-hist(coreSalaries$nSalary[coreSalaries$gender=="M"], xlim = c(0,300000), breaks=20, ylim=c(0,20000), main="Male Employees", xlab="Salary")
-hist(coreSalaries$nSalary[coreSalaries$gender=="F"], xlim = c(0,300000), breaks=20, ylim=c(0,20000), main="Female Employees", xlab="Salary")
+hist(coreSalaries$nSalary[coreSalaries$gender=="M"], xlim = c(0,200000), breaks=30, ylim=c(0,20000), main="Male Employees", xlab="Salary")
+hist(coreSalaries$nSalary[coreSalaries$gender=="F"], xlim = c(0,200000), breaks=30, ylim=c(0,20000), main="Female Employees", xlab="Salary")
 ```
+
+The chart shows that female pay rates are lower than male's, in general. Let's do some elementary stats to quantify that:
+
+```{r quick_stats, echo=FALSE, cache=TRUE}
+data.frame(Male_average = mean(coreSalaries$nSalary[coreSalaries$gender=="M"]),
+           Make_sdev = sd(coreSalaries$nSalary[coreSalaries$gender=="M"]),
+           Female_average = mean(coreSalaries$nSalary[coreSalaries$gender=="F"]),
+           Female_sdev = sd(coreSalaries$nSalary[coreSalaries$gender=="F"]))
+```
+
+What this tells us is that the average female pay is 
+$`r round(mean(coreSalaries$nSalary[coreSalaries$gender=="M"])-mean(coreSalaries$nSalary[coreSalaries$gender=="F"]), digits=0)` 
+lower than the average male's. Stated differently, the average female makes 
+`r round(100*mean(coreSalaries$nSalary[coreSalaries$gender=="F"])/mean(coreSalaries$nSalary[coreSalaries$gender=="M"]), digits=0)`%
+of the average male's. Men also have a wider range of pay than women do.
+
+This number is fairly consistent with other estimates of the [US gender pay gap](http://en.wikipedia.org/wiki/Gender_pay_gap#United_States)
+(although quite a bit better).
+
+This disparity is not proof of bias, of course.  Just the different types of jobs, seniority, and training the different sexes
+have can account for the differences.  The gold standard for detecting bias is whether men and women are paid differently
+all other relevant things being equal.  (What is relevant is, of course, another contentious topic.)
+
+## Detailed Analysis - Titles and Levels
+
+```{r detailed1,echo=FALSE, cache=TRUE}
+source('salaryOperations.R')
+sbc <- salaryByClass(coreSalaries)
+```
+
+The data from Florida also includes a job classification,
+with `r length(sbc$titles)` different job titles in the data.
+Example job classifications include:
+
+* SAFETY PROGRAM MANAGER - SES
+* REGIONAL OPERATIONS MANAGER
+* HUMAN RESOURCE TECHNICIAN II
+* DIRECTOR OF STAFF & CURR. DEVELOPMENT
+* GOVERNOR
+
+(Interestingly, the Governor is the lowest paid full time salaried employee in Florida, getting $0.12 per year)
+
+The use of titles provides us a better way of looking at the data.  Now we can ask
+whether on average, within each job classification, women are paid less than the men in that same classification.
+
+To do this, I compute the average pay in each job classification (across men, women, and folks I cannot assign a sex to).
+Then I divide each man's pay and each woman's pay by the average pay in that classification.  We can call this the
+"normalized" salary. A normalized salary below 1 indicates
+the person is getting paid less than average.  Conversely, a number above indicates the person is getting paid more than
+average.
+
+Here is a histogram of the normalized salaries for men and women: it shows, in a glance, what they're getting paid:
+
+```{r detailed2,echo=FALSE, cache=TRUE}
+bias <- computeBias(sbc)
+par(mfrow=c(1,2))
+hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="Normalized Salary")
+hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="Normalized Salary")
+```
+
+If we then average all the men's normalized salary and all the of the women's normalized salary, this gives us a view
+of how the average male and female employee of the State of Florida is doing.
+In a perfect, bias free world, the average man's and woman's pay would be 1.0.  
+
+```{r detailedstats,echo=FALSE, cache=TRUE}
+data.frame(Mens.Mean=mean(bias$Mens), 
+#           Mens.Median=median(bias$Mens),
+           Mens.stddev=sd(bias$Mens), 
+           Womens.Mean=mean(bias$Womens),
+#           Womens.Median=median(bias$Womens),
+           Womens.stddev=sd(bias$Womens))
+```
+
+By looking at this data, we can see that, for job classifications that have both male and female employees,
+the female employees on average receive `r round(100*mean(bias$Womens)/mean(bias$Mens),digits=0)` cents for every $1
+a male makes -- virtually indistinguishable. The "stddev" is the standard deviation, and this table shows us that
+women's salaries fall in a bit more of a narrow range than men’s do.
+
+
+## Detailed Analysis - Titles without Levels
+
+A source of bias could be that women are not promoted as frequently
+as men, and so are discriminated against not because they are paid less for the
+same official job, but that they are being
+slotted into lower paying levels (while  doing the same work as higher levels).
+
+Here is an example of titles with levels in the payroll database:
+
+* GOVERNMENT OPERATIONS CONSULTANT I
+* GOVERNMENT OPERATIONS CONSULTANT II
+* GOVERNMENT OPERATIONS CONSULTANT III
+
+You could imagine that, if there were pay bias, one sign would be for women to be disproportionately
+assigned to the level I jobs while men were overrepresented in the level III jobs.
+
+An easy way to check is to take the average pay for all levels (in this example,
+anyone with a "GOVERNMENT OPERATIONS CONSULTANT" job regardless of level),
+and see if, out of these larger pools, women were paid less than men.
+
+If that is the case, then if we group all men and women together who have the
+same job title except for the level, then we would expect that analysis to
+show a bias against women.
+
+```{r commondetailed1,echo=FALSE, cache=TRUE}
+source('titleShrink.R')
+commonTitles <- titleShrink(coreSalaries)
+sbc <- salaryByClass(commonTitles)
+```
+Let's run the same analysis, but this time consider all I, II, III, etc. jobs to
+be the same basic job.  Is there a bias to be found because women are in lower levels?
+
+Here is the distribution of normalized salaries for men and women, when the
+normalization is done against the average for all levels of a title:
+
+```{r commondetailed2,echo=FALSE, cache=TRUE}
+bias <- computeBias(sbc)
+par(mfrow=c(1,2))
+hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="% of average in classification")
+hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="% of average in classification")
+```
+
+The histogram doesn't give us an obvious answer, but by looking across all men
+and women we can get a better answer.
+For job classifications that have both male and female employees,
+the female employees on average receive 
+`r round(100*mean(bias$Womens)/mean(bias$Mens),digits=0)` cents for every $1
+a male makes --which make the pay virtually indistinguishable.
+
+The full statistics are:
+
+```{r commontitlestats,echo=FALSE, cache=TRUE}
+data.frame(Mens.Average=mean(bias$Mens), 
+           Mens.stddev=sd(bias$Mens), 
+           Womens.Average=mean(bias$Womens), 
+           Womens.stddev=sd(bias$Womens))
+```
+
+
+## Conclusion
+
+We have seen that across all state employees, women receive
+`r round(100*mean(coreSalaries$nSalary[coreSalaries$gender=="F"])/mean(coreSalaries$nSalary[coreSalaries$gender=="M"]), digits=0)` cents
+to every $1  male employees make.
+But when we drill down into individual job classifications and then groups of
+related job classifications, the difference evaporates.
+
+This could be explained in several ways:
+
+* Women are being put into completely different job classifications even though they are doing the same job as men.
+* Women are choosing lower paid professions.  (Whether those professions should be lower paid is another issue)
+* There is some other difference between men and women's employment (seniority, geography, etc.)
+
+Some of these explanations are not consistent with a gender pay gap, and others are.  And there could clearly be a mixture of reasons,
+some of which are a result of bias and some that are not.
+
+However, the one thing that seems clear is that the payroll data itself does not offer us proof of a gender pay gap,
+and, in fact, suggests the State of Florida appears to be doing a good job of ensuring that men and women doing the
+same work are getting paid the same.

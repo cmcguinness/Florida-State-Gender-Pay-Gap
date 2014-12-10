@@ -9,6 +9,7 @@ loadBaseSalaries <- function() {
   salaries <<- read.csv("Florida/dmssalaries.csv")
   nSalary <- as.numeric(gsub("[ $,]","",as.character(salaries$Salary)))
   salaries$nSalary <<- nSalary
+  salaries$Class.Title <<- as.character(salaries$Class.Title) # Not as a factor please...
 }
 
 source("getNamesSimple.R")
