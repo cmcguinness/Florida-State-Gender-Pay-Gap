@@ -1,15 +1,38 @@
-
-
+# #############################################################################
+# getNamesSimple: 
+#
+# Get the list of first names from the Social Security Admin's
+# website to build up the database of male/femail names
+#
+# More details about the baby names can be found on this page:
+#   http://www.ssa.gov/oact/babynames/limits.html
+# #############################################################################
 getNamesSimple <- function () {
+  # We cache the names in a file so that subsequent runs of this go faster
   if (file.exists("firstnames.RData")) {
     load("firstnames.RData", .GlobalEnv)
     return(invisible(firstNames))
   }
   
+  # Do we have the downloaded data?
+  if (! file.exists("SSA")) {
+    # No, so let's download it ...
+    download.file("http://www.ssa.gov/oact/babynames/names.zip", "names.zip")
+    # Create the directory
+    dir.create("SSA")
+    # Expand the files into it ...
+    unzip("names.zip", exdir = "SSA")
+    # Remove the downloaded file
+    unlink("names.zip")
+  }
+  
+  # Hold the data as we build it in vectors...
   names <- character(0)
   males <- integer(0)
   females <- integer(0)
   
+  # We look at names from 1945 to 2013.  The data goes back a lot further
+  # than that, though, so 
   for (year in 1945:2013) {
     print(year)
     fname <- paste0("SSA/yob", year, ".txt")
