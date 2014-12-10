@@ -1,3 +1,8 @@
+# #############################################################################
+# loadBaseSalaries (local)
+#
+# Get the raw salary data from the state of Florida's website and parse it...
+# #############################################################################
 loadBaseSalaries <- function() {
   if (! file.exists("Florida/dmssalaries.csv")) {
     if (! file.exists("Florida")) {
@@ -13,6 +18,12 @@ loadBaseSalaries <- function() {
 }
 
 source("getNamesSimple.R")
+# #############################################################################
+# computeGender (local)
+#
+# Add in a column to the salary data of the guestimated gender of each 
+# employee...
+# #############################################################################
 computeGender <- function() {
   
   # print("Estimating genders for employees")
@@ -23,7 +34,12 @@ computeGender <- function() {
 
 }
 
-
+# #############################################################################
+# getSalaries
+#
+# Get the salary data into a data frame.  Caches a copy of it in an .RData
+# file to speed up re-runs
+# #############################################################################
 getSalaries <- function() {
   if (file.exists("salaries.RData")) {
     load("salaries.RData", .GlobalEnv)
