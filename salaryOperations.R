@@ -28,9 +28,9 @@ salaryByClass <- function (in_salaries) {
   for (title in uniqueTitles) {
     # Not sure why, but some titles are blank, so skip them...
     if (title != "") {
-
+      
       num <- num + 1
-
+      
       # Add the title to the list ...
       titles[num] <- title
       
@@ -90,6 +90,12 @@ computeBias <- function (salaryByClass) {
   mens <- numeric()
   womens <- numeric()
   
+  orphanMen <<- numeric()
+  orphanWomen <<- numeric()
+  
+  # How many job classifications have either all men or all women?
+  noMatches <<- 0
+  
   # Look at each title ....
   for (i in seq_along(salaryByClass$titles)) {
     # If there is at least one man and one woman with that title
@@ -109,7 +115,89 @@ computeBias <- function (salaryByClass) {
       
       # while we use the unknowns' salaries to compute the average, we do not do anything
       # with their salary specifically ...
+    } else {
+      # We'll just lump all "orphan" men and women into a group for further analysis
+      noMatches <<- noMatches + 1
+      for (salary in salaryByClass$females[[i]]) {
+        orphanWomen <<- c(orphanWomen, salary)
+      }
+      for (salary in salaryByClass$males[[i]]) {
+        orphanMen <<- c(orphanMen, salary)
+      }
     }
+  }
+  
+  # Make the list ... (remember, mens and womens are of unequal length, so this cannot be a data frame)
+  biasData <- list(mens,womens)
+  names(biasData) <- c("Mens", "Womens")
+  # and give it back!
+  return(biasData)
+}
+
+
+# #############################################################################
+# computeLopsided
+#
+# Other analysis shows that most job classifications have fairly even pay within
+# job classifications.  What about a bias where male dominated classifications
+# get paid more than women? So even if men in the "female" jobs are paid the
+# same as women, they're getting paid less to do "women's work"?
+#
+# Let's run the numbers ...
+# #############################################################################
+computeLopsided <- function (sbc) {
+  
+  threshold <- 0.666    # Look for classes that have more than two thirds men or women
+  
+  # These will hold the list of normalized salaries for men and women
+  mens <- numeric()
+  womens <- numeric()
+  
+  # Look at each title ....
+  for (i in seq_along(sbc$titles)) {
+    # If there is at least one man and one woman with that title
+    numMen <- length(sbc$males[[i]])
+    numWomen <- length(sbc$females[[i]])
+    
+    if (is.na(numMen)) numMen = 0
+    if (is.na(numWomen)) numWomen = 0
+    
+    total <- numMen + numWomen
+    
+    pcMen <- numMen / total
+    pcWomen <- numWomen / total
+    
+    if (is.nan(pcMen)) pcMen = 0
+    if (is.nan(pcWomen)) pcWomen =0
+
+    
+    if (pcWomen > threshold) {
+      for (salary in sbc$females[[i]]) {
+        womens <- c(womens, salary)
+      }
+      for (salary in sbc$males[[i]]) {
+        womens <- c(womens, salary)
+      }
+      for (salary in sbc$others[[i]]) {
+        womens <- c(womens, salary)
+      }
+    }
+    
+    if (pcMen > threshold) {
+      for (salary in sbc$females[[i]]) {
+        # add their "normalized" salary to the female list
+        mens <- c(mens, salary)
+      }
+      for (salary in sbc$males[[i]]) {
+        # add their normalized salary to the male list
+        mens <- c(mens, salary)
+      }
+      for (salary in sbc$others[[i]]) {
+        # add their normalized salary to the male list
+        mens <- c(mens, salary)
+      }
+    }
+    
   }
   
   # Make the list ... (remember, mens and womens are of unequal length, so this cannot be a data frame)
