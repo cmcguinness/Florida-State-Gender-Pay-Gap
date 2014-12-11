@@ -6,7 +6,7 @@ output:
     theme: journal
 ---
 
-## An analysis of Florida's State Payroll
+## A quick analysis of Florida's State Payroll
 ### Charles McGuinness, charles@mcguinness.us
 ### `r format(Sys.time(), "%B %d, %Y")`
 
@@ -15,6 +15,8 @@ source('getNamesSimple.R')
 getNamesSimple()
 source('Salaries.R')
 getSalaries()
+library(pander)
+panderOptions('table.split.table', Inf)
 ```
 
 # Introduction
@@ -57,10 +59,10 @@ hist(coreSalaries$nSalary[coreSalaries$gender=="F"], xlim = c(0,200000), breaks=
 The chart shows that female pay rates are lower than male's, in general. Let's do some elementary stats to quantify that:
 
 ```{r quick_stats, echo=FALSE, cache=TRUE}
-data.frame(Male_average = mean(coreSalaries$nSalary[coreSalaries$gender=="M"]),
-           Make_sdev = sd(coreSalaries$nSalary[coreSalaries$gender=="M"]),
-           Female_average = mean(coreSalaries$nSalary[coreSalaries$gender=="F"]),
-           Female_sdev = sd(coreSalaries$nSalary[coreSalaries$gender=="F"]))
+pander(data.frame(Male_mean = mean(coreSalaries$nSalary[coreSalaries$gender=="M"]),
+           Male_median = median(coreSalaries$nSalary[coreSalaries$gender=="M"]),
+           Female_mean = mean(coreSalaries$nSalary[coreSalaries$gender=="F"]),
+           Female_median = median(coreSalaries$nSalary[coreSalaries$gender=="F"])))
 ```
 
 What this tells us is that the average female pay is 
@@ -70,11 +72,15 @@ lower than the average male's. Stated differently, the average woman makes
 cents for every dollar the average man makes.
 
 This number is fairly consistent with other estimates of the [US gender pay gap](http://en.wikipedia.org/wiki/Gender_pay_gap#United_States)
-(although quite a bit better).
+(although quite a bit better).  According to [this report](http://www.aauw.org/files/2014/09/Florida-Pay-Gap-2014.pdf),
+the median (not mean) earnings for men in Florida is $41K compared to women's $34K.  The median pay at the state of Florida has a narrower gap,
+but generally reflects the same trends as we see in the private sector in Florida as well.
 
 This disparity is not proof of bias, of course.  Just the different types of jobs, seniority, and training the different sexes
 have can account for the differences.  The gold standard for detecting bias is whether men and women are paid differently
 all other relevant things being equal.  (What is relevant is, of course, another contentious topic.)
+
+\newpage
 
 # Bias Within Job Classes
 
@@ -122,12 +128,14 @@ In a perfect, bias free world, the average man's and woman's pay would be 1.0.
 In Florida, the numbers are:
 
 ```{r detailedstats,echo=FALSE, cache=TRUE}
-data.frame(Mens.Mean=mean(bias$Mens), 
+pander(
+  data.frame(Mens.Mean=mean(bias$Mens), 
 #           Mens.Median=median(bias$Mens),
            Mens.stddev=sd(bias$Mens), 
            Womens.Mean=mean(bias$Womens),
 #           Womens.Median=median(bias$Womens),
            Womens.stddev=sd(bias$Womens))
+)
 ```
 
 By looking at this data, we can see that, for job classifications that have both male and female employees,
@@ -185,11 +193,15 @@ a male makes --which make the pay virtually indistinguishable.
 The full statistics are:
 
 ```{r commontitlestats,echo=FALSE, cache=TRUE}
+pander(
 data.frame(Mens.Average=mean(bias$Mens), 
            Mens.stddev=sd(bias$Mens), 
            Womens.Average=mean(bias$Womens), 
            Womens.stddev=sd(bias$Womens))
+)
 ```
+
+\newpage
 
 # Bias Between Heavily Male and Female Job Categories
 
@@ -214,16 +226,34 @@ We can see that there's a strong bias between male dominated and female dominate
 job classifications.  The average pay for each sex is:
 
 ```{r classBias2,echo=FALSE, cache=TRUE, message=FALSE}
-
+pander(
 data.frame(Mens.Average=mean(classBias$Mens), 
            Mens.stddev=sd(classBias$Mens), 
            Womens.Average=mean(classBias$Womens), 
            Womens.stddev=sd(classBias$Womens))
+)
 ```
 
 So when you compare jobs that are heavily female versus jobs that are heavily male,
 we see that women earn `r round(100*mean(classBias$Womens)/mean(classBias$Mens), 0)`
 cents for every dollar a man earns.
+
+\newpage
+
+What are the most heavily male and heavily female job categories?
+
+```{r topcats, echo=FALSE, message=FALSE}
+pander(
+data.frame(Top_Womens=head(lopsided.titles[order(-lopsided.balance)], n=10),
+           Top_Mens=head(lopsided.titles[order(lopsided.balance)], n=10)),
+justify=c("left", "left")
+)
+```
+
+It seems that much of the discrepency can be attributed to the heavily
+male presence in law enforcement jobs.  This appears to be an example of the
+[danger wage premium](http://en.wikipedia.org/wiki/Male%E2%80%93female_income_disparity_in_the_United_States#Danger_wage_premium)
+concept, even if that concept is not settled fact.
 
 \newpage
 
@@ -244,9 +274,12 @@ predominantly female vs. predominantly male, we see the gender pay gap open
 its widest: "men's work" pays substantially better than "women's work",
 with women only earning
 `r round(100*mean(classBias$Womens)/mean(classBias$Mens), 0)` cents
-for every dollar the men make.
+for every dollar the men make.  This could be a result of completely
+legitimate reasons (the danger wage premium mentioned above), or it
+could be for illegitimate reasons (e.g., law enforcement is better able
+to bargain/lobby for higher pay).
 
-The State of
+Certainly, the State of
 Florida appears to be doing a good job of ensuring that men and women doing the
 same work are getting paid the same.  But the data also suggest that
 the state should look carefully at pay differences between traditionally
@@ -288,7 +321,7 @@ one can build up with a very comprehensive list of names and the sexes of those 
 For this analysis, names from 1945 to 2013 were used, giving a database with the following # of unique names:
 
 ```{r loadNames, echo=FALSE, message=FALSE}
-data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
+pander(data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0)))
 ```
 
 The list of names requires a bit of processing, as it turns out that many first names have been given to both male and
@@ -297,14 +330,14 @@ For example, for Charles, my name, the counts of male vs. female babies:
 
 ```{r charles_example, echo=FALSE}
   pos <- match("charles", firstNames$names)
-  data.frame(Male_Charles = firstNames$males[pos], Female_Charles = firstNames$females[pos])
+  pander(data.frame(Male_Charles = firstNames$males[pos], Female_Charles = firstNames$females[pos]))
 ```
 
 That's pretty definitive.  But for other names, like "Pat", not so much:
 
 ```{r pat_example, echo=FALSE}
   pos <- match("pat", firstNames$names)
-  data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos])
+  pander(data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos]))
 ```
 
 For this analysis, I have used a rule that 90% or more of the babies with a given name have to be male (or female)
@@ -321,10 +354,12 @@ or have spelling variations not recognized. Fortunately, the vast majority of em
 assigned a gender.  Here are the final counts:
 
 ```{r salaries_gender, echo=FALSE}
-data.frame(Males = sum(salaries$gender=="M"), 
+pander(
+  data.frame(Males = sum(salaries$gender=="M"), 
            Females = sum(salaries$gender=="F"), 
            Androgenous = sum(salaries$gender=="A"), 
            Unknown = sum(salaries$gender=="U"))
+  )
 ```
 
 We could loosen the 90% restriction (perhaps to 80%) to move a few more androgynous names into definitive ones, but I do not think

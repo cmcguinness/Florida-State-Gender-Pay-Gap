@@ -153,14 +153,20 @@ computeLopsided <- function (sbc) {
   mens <- numeric()
   womens <- numeric()
   
+  # Some side effects ...
+  lopsided.titles <<- character()
+  lopsided.balance <<- integer()
+  
   # Look at each title ....
   for (i in seq_along(sbc$titles)) {
-    # If there is at least one man and one woman with that title
     numMen <- length(sbc$males[[i]])
     numWomen <- length(sbc$females[[i]])
     
     if (is.na(numMen)) numMen = 0
     if (is.na(numWomen)) numWomen = 0
+    
+    lopsided.titles <<- c(lopsided.titles, sbc$titles[i])
+    lopsided.balance <<- c(lopsided.balance, numWomen-numMen)
     
     total <- numMen + numWomen
     
