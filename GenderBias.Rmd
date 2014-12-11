@@ -6,107 +6,44 @@ output:
     theme: journal
 ---
 
-### An analysis of Florida's State Payroll
-#### `r format(Sys.time(), "%B %d, %Y")`
-### Charles McGuinness
-#### charles@mcguinness.us
+## An analysis of Florida's State Payroll
+### Charles McGuinness, charles@mcguinness.us
+### `r format(Sys.time(), "%B %d, %Y")`
 
-## Introduction
+```{r setup, echo=FALSE, message=FALSE}
+source('getNamesSimple.R')
+getNamesSimple()
+source('Salaries.R')
+getSalaries()
+```
 
-There is a general consensus that there is a persistent bias in the wages paid to male vs. female workers in the USA. 
+# Introduction
+
+Is there is a persistent bias in the wages paid to male vs. female workers in the USA? 
 According to the [Bureau of Labor Statistics](http://www.bls.gov/cps/wlf-databook-2011.pdf),
-women in America make, on average, 81 cents for every dollar a man makes.  Many
+women in America make, on average, 81 cents for every dollar a man makes.  Is this
+a result of discrimination against women, or are there benign and innocent
+causes?
+Many
 [reasons for the gap](http://en.wikipedia.org/wiki/Male%E2%80%93female_income_disparity_in_the_United_States#Sources_of_the_gender_gap)
 have been suggested, some of which are related to the different choice of careers made by men and women,
 and some reasons which are attributed to outright discrimination.
 
-Part of the challenge of understanding the pay gap is that it's hard to get good, comprehensive data on jobs and pay.
-Researchers often rely on [surveys](http://psidonline.isr.umich.edu/) to discern trends and deduce reasons.  But the
+Part of the challenge of understanding the root causes of pay gap is that it's 
+hard to get good, detailed data on jobs and pay.
+Researchers often rely on [surveys](http://psidonline.isr.umich.edu/) to discern
+trends and deduce reasons.  But the
 use of incomplete data leads to interpretation and opens the door to the subjective bias of the researcher.
 
 The state of Florida offers us an opportunity to do a more objective analysis, as it provides a complete, downloadable 
 database of its payroll as part of the open government program. By looking at this data, we can examine the 
-question of gender bias in the Florida state government, and start to answer the question of whether Florida has a gender pay gap.
+dimensions of pay differences in the Florida state government, and start to answer the question of whether Florida has a gender pay gap.
 I write "start", because a a better answer to the question requires far more research and analysis than I (and maybe anyone)
 am capable of. However, we can at least see if there is prima facie evidence of bias and start to see the dimensions of the issue.
 
-## Analysis Process
+\newpage
 
-The State of Florida provide weekly salary updates on its [official site](http://dmssalaries.herokuapp.com/salaries). There, you
-can download the complete payroll ("Export All Salaries").  This report starts with this data and then enriches it to prepare
-for the analysis.
-
-The enrichment takes two steps:
-
-1. Some simple clean up of the data (trivial)
-2. Estimating the gender of each employee (non-trivial)
-
-With the enriched data, this report looks at gender differences across the entire state, as well as differences within each 
-job classification.  For the purposes of this analysis, only employees who are full-time and salaried were 
-looked at (a vast majority of state employees), to order to avoid distortions caused by part-time work or the variable
-pay earned by hourly workers (because of differences in hours worked).
-
-### A Word about Estimating Gender
-
-Since the question at hand is the pay differences for men and women, a key piece of information is knowing which employees are
-male and which are female.  That information, however, is not present in the data downloaded from the state.
-Thus, the first step of the analysis is to estimate the gender of each employee from their first name.
-
-The actual mapping of first names to gender is a fairly straight-forward process, driven by a database of names.
-The source of this database is a Social Security Administration published list of the 1000 most popular baby names from each
-year.  By downloading this data and aggregating it across the years,
-one can build up with a very comprehensive list of names and the sexes of those names. 
-
-For this analysis, names from 1945 to 2013 were used, giving a database with the following # of unique names:
-
-```{r loadNames, echo=FALSE, message=FALSE}
-source('getNamesSimple.R')
-getNamesSimple()
-data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
-```
-
-The list of names requires a bit of processing, as it turns out that many first names have been given to both male and
-female babies.  Usually, there is such an overwhelming trend in the use that the name is unambiguously male or female.
-For example, for Charles, my name, the counts of male vs. female babies:
-
-```{r charles_example, echo=FALSE}
-  pos <- match("charles", firstNames$names)
-  data.frame(Male_Charles = firstNames$males[pos], Female_Charles = firstNames$females[pos])
-```
-
-That's pretty definitive.  But for other names, like "Pat", not so much:
-
-```{r pat_example, echo=FALSE}
-  pos <- match("pat", firstNames$names)
-  data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos])
-```
-
-For this analysis, I have used a rule that 90% or more of the babies with a given name have to be male (or female)
-to decide the name is unambiguously male or female.
-There's a little room for error (at worst, a 10% chance of mis-identification), but that's going to affect only a very
-small number of names on the edge.  But if a name falls below 90% male or female, I declare it to be androgynous (like
-"Pat" is).
-If the database doesn't have the name, I try a few simple transformations to find it.  For example, sometimes the first
-name field in the employee data has both the first and middle name in it; so when I find a compound name I test each
-component of it.  "Mary Grace" may not be in the database, but "Mary" is.
-
-There are some names that remain where we just don't know.  Lots of initials are in the database.  Other names are very rare
-or have spelling variations not recognized. Fortunately, the vast majority of employees can be
-assigned a gender.  Here are the final counts:
-
-```{r salaries_gender, echo=FALSE}
-source('Salaries.R')
-getSalaries()
-data.frame(Males = sum(salaries$gender=="M"), 
-           Females = sum(salaries$gender=="F"), 
-           Androgenous = sum(salaries$gender=="A"), 
-           Unknown = sum(salaries$gender=="U"))
-```
-
-We could loosen the 90% restriction (perhaps to 80%) to move a few more androgynous names into definitive ones, but I do not think
-the trade-off is beneficial
-
-## Bias Across Entire Workforce
+# Bias Across Entire Workforce
 
 The first way to look at the data is at men and women across the board.  Let's look at the pay for salaried, full time employees.
 
@@ -139,7 +76,7 @@ This disparity is not proof of bias, of course.  Just the different types of job
 have can account for the differences.  The gold standard for detecting bias is whether men and women are paid differently
 all other relevant things being equal.  (What is relevant is, of course, another contentious topic.)
 
-## Bias Within Job Classes
+# Bias Within Job Classes
 
 ```{r detailed1,echo=FALSE, cache=TRUE}
 source('salaryOperations.R')
@@ -199,7 +136,7 @@ a male makes -- virtually indistinguishable. The "stddev" is the standard deviat
 women's salaries fall in a bit more of a narrow range than men’s do.
 
 
-## Bias Within Similar Job Classes
+# Bias Within Similar Job Classes
 
 Even if the pay within job classes was unbiased, there could still be a 
 source of bias if women are not promoted as frequently through the levels
@@ -254,7 +191,7 @@ data.frame(Mens.Average=mean(bias$Mens),
            Womens.stddev=sd(bias$Womens))
 ```
 
-## Bias Between Heavily Male and Female Job Categories
+# Bias Between Heavily Male and Female Job Categories
 
 We see that men and women are generally paid the same within job classifications.
 And yet there's an overall pay gap between male and female state employees.  So
@@ -288,7 +225,9 @@ So when you compare jobs that are heavily female versus jobs that are heavily ma
 we see that women earn `r round(100*mean(classBias$Womens)/mean(classBias$Mens), 0)`
 cents for every dollar a man earns.
 
-## Conclusions
+\newpage
+
+# Conclusions
 
 As with most other studies of the gender pay gap, looking at the state of Florida's
 payroll leaves us with many questions even if we have a better understanding
@@ -315,7 +254,83 @@ male and female jobs to see if and where women are being underpaid even
 though they bring comparable levels of skill, training, and experience
 to the job.
 
-----
+\newpage
+
+# Appendix
+
+## Methodology
+
+The State of Florida provide weekly salary updates on its [official site](http://dmssalaries.herokuapp.com/salaries). There, you
+can download the complete payroll ("Export All Salaries").  This report starts with this data and then enriches it to prepare
+for the analysis.
+
+The enrichment takes two steps:
+
+1. Some simple clean up of the data (trivial)
+2. Estimating the gender of each employee (non-trivial)
+
+With the enriched data, this report looks at gender differences across the entire state, as well as differences within each 
+job classification.  For the purposes of this analysis, only employees who are full-time and salaried were 
+looked at (a vast majority of state employees), to order to avoid distortions caused by part-time work or the variable
+pay earned by hourly workers (because of differences in hours worked).
+
+## Estimating Gender
+
+Since the question at hand is the pay differences for men and women, a key piece of information is knowing which employees are
+male and which are female.  That information, however, is not present in the data downloaded from the state.
+Thus, the first step of the analysis is to estimate the gender of each employee from their first name.
+
+The actual mapping of first names to gender is a fairly straight-forward process, driven by a database of names.
+The source of this database is a Social Security Administration published list of the 1000 most popular baby names from each
+year.  By downloading this data and aggregating it across the years,
+one can build up with a very comprehensive list of names and the sexes of those names. 
+
+For this analysis, names from 1945 to 2013 were used, giving a database with the following # of unique names:
+
+```{r loadNames, echo=FALSE, message=FALSE}
+data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
+```
+
+The list of names requires a bit of processing, as it turns out that many first names have been given to both male and
+female babies.  Usually, there is such an overwhelming trend in the use that the name is unambiguously male or female.
+For example, for Charles, my name, the counts of male vs. female babies:
+
+```{r charles_example, echo=FALSE}
+  pos <- match("charles", firstNames$names)
+  data.frame(Male_Charles = firstNames$males[pos], Female_Charles = firstNames$females[pos])
+```
+
+That's pretty definitive.  But for other names, like "Pat", not so much:
+
+```{r pat_example, echo=FALSE}
+  pos <- match("pat", firstNames$names)
+  data.frame(Male_Pat = firstNames$males[pos], Female_Pat = firstNames$females[pos])
+```
+
+For this analysis, I have used a rule that 90% or more of the babies with a given name have to be male (or female)
+to decide the name is unambiguously male or female.
+There's a little room for error (at worst, a 10% chance of mis-identification), but that's going to affect only a very
+small number of names on the edge.  But if a name falls below 90% male or female, I declare it to be androgynous (like
+"Pat" is).
+If the database doesn't have the name, I try a few simple transformations to find it.  For example, sometimes the first
+name field in the employee data has both the first and middle name in it; so when I find a compound name I test each
+component of it.  "Mary Grace" may not be in the database, but "Mary" is.
+
+There are some names that remain where we just don't know.  Lots of initials are in the database.  Other names are very rare
+or have spelling variations not recognized. Fortunately, the vast majority of employees can be
+assigned a gender.  Here are the final counts:
+
+```{r salaries_gender, echo=FALSE}
+data.frame(Males = sum(salaries$gender=="M"), 
+           Females = sum(salaries$gender=="F"), 
+           Androgenous = sum(salaries$gender=="A"), 
+           Unknown = sum(salaries$gender=="U"))
+```
+
+We could loosen the 90% restriction (perhaps to 80%) to move a few more androgynous names into definitive ones, but I do not think
+the trade-off is beneficial
+
+### Fork me!
 
 This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
