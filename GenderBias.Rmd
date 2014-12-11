@@ -58,7 +58,7 @@ one can build up with a very comprehensive list of names.
 
 For this analysis, names from 1945 to 2013 were used, giving a database with the following # of unique names:
 
-```{r loadNames, echo=FALSE}
+```{r loadNames, echo=FALSE, message=FALSE}
 source('getNamesSimple.R')
 getNamesSimple()
 data.frame(Total_Male_Names = sum(firstNames$males > 0), Total_Female_Names = sum(firstNames$females > 0))
@@ -82,7 +82,7 @@ That's pretty definitive.  But for other names, like "Pat", not so much:
 
 For this analysis, I have used a rule that 90% or more of the babies with a given name have to be male (or female)
 to decide the name is unambiguously male or female.
-There's a little room for error (at worst, a 10% chance of misidentification), but that's going to affect only a very
+There's a little room for error (at worst, a 10% chance of mis-identification), but that's going to affect only a very
 small number of names on the edge.  But if a name falls below 90% male or female, I declare it to be androgynous (like
 "Pat" is).
 If the database doesn't have the name, I try a few simple transformations to find it.  For example, sometimes the first
@@ -175,9 +175,11 @@ hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="Normalized Salary")
 hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="Normalized Salary")
 ```
 
-If we then average all the men's normalized salary and all the of the women's normalized salary, this gives us a view
+If we  average all the men's normalized salary and all the of the women's normalized salary, this gives us a view
 of how the average male and female employee of the State of Florida is doing.
-In a perfect, bias free world, the average man's and woman's pay would be 1.0.  
+In a perfect, bias free world, the average man's and woman's pay would be 1.0.
+
+In Florida, the numbers are:
 
 ```{r detailedstats,echo=FALSE, cache=TRUE}
 data.frame(Mens.Mean=mean(bias$Mens), 
@@ -196,10 +198,11 @@ women's salaries fall in a bit more of a narrow range than men’s do.
 
 ## Detailed Analysis - Titles without Levels
 
-A source of bias could be that women are not promoted as frequently
-as men, and so are discriminated against not because they are paid less for the
-same official job, but that they are being
-slotted into lower paying levels (while  doing the same work as higher levels).
+Even if the pay within job classes was unbiased, there could still be a 
+source of bias if women are not promoted as frequently through the levels
+as men are.  That would result in women being paid less for the
+same job by being
+slotted into lower paying levels.
 
 Here is an example of titles with levels in the payroll database:
 
@@ -207,16 +210,12 @@ Here is an example of titles with levels in the payroll database:
 * GOVERNMENT OPERATIONS CONSULTANT II
 * GOVERNMENT OPERATIONS CONSULTANT III
 
-You could imagine that, if there were pay bias, one sign would be for women to be disproportionately
-assigned to the level I jobs while men were overrepresented in the level III jobs.
+You could imagine that, if there were pay bias, women would be disproportionately
+assigned to the level I jobs while men were over-represented in the level III jobs.
 
 An easy way to check is to take the average pay for all levels (in this example,
 anyone with a "GOVERNMENT OPERATIONS CONSULTANT" job regardless of level),
 and see if, out of these larger pools, women were paid less than men.
-
-If that is the case, then if we group all men and women together who have the
-same job title except for the level, then we would expect that analysis to
-show a bias against women.
 
 ```{r commondetailed1,echo=FALSE, cache=TRUE}
 source('titleShrink.R')
@@ -263,16 +262,29 @@ related job classifications, the difference evaporates.
 
 This could be explained in several ways:
 
-* Women are being put into completely different job classifications even though they are doing the same job as men.
-* Women are choosing lower paid professions.  (Whether those professions should be lower paid is another issue)
-* There is some other difference between men and women's employment (seniority, geography, etc.)
+* Women are being put into completely different job classifications even though
+they are doing the same job as men. This would be an example of blatant bias, 
+and I suspect it's not likely to be true; it would be too obvious to the workers
+affected by it.
+* Women are over-represented in lower paid professions.  You can certainly
+argue that these professions are paid less because of societal bias, and I
+won't disagree with you. But the fact that the state has a lower gap, overall, 
+than is generally given for the country as a whole seems to suggest the state 
+is fairer than average.
+* There is some other difference between men and women's employment (seniority, 
+geography, etc.) that explains the difference.  This sort of argument is
+typically offered by those who feel the gender pay gap is the result of
+perfectly innocent processes.
 
-Some of these explanations are not consistent with a gender pay gap, and others are.  And there could clearly be a mixture of reasons,
-some of which are a result of bias and some that are not.
-
-However, the one thing that seems clear is that the payroll data itself does not offer us proof of a gender pay gap,
-and, in fact, suggests the State of Florida appears to be doing a good job of ensuring that men and women doing the
+The one thing that seems clear is that the payroll data itself does not offer
+us a smoking gun in a gender pay gap, and, in fact, suggests the State of
+Florida appears to be doing a good job of ensuring that men and women doing the
 same work are getting paid the same.
+
+----
+
+This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/) 
+![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png)
 
 You can download, run, and modify the complete sources for this analysis on
 [Github](https://github.com/cmcguinness/Florida-State-Gender-Pay-Gap)

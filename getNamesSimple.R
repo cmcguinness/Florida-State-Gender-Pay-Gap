@@ -31,10 +31,11 @@ getNamesSimple <- function () {
   males <- integer(0)
   females <- integer(0)
   
+  # messages("This takes quite a while. I'll print out each year as it's processing")
   # We look at names from 1945 to 2013.  The data goes back a lot further
   # than that, though, so 
   for (year in 1945:2013) {
-    # print(year)
+    # message(year)
     
     # Read in the data for the year
     fname <- paste0("SSA/yob", year, ".txt")
@@ -65,6 +66,7 @@ getNamesSimple <- function () {
   
   # Save the list of names in the global environment (I know, tacky)
   firstNames <<- data.frame(names,males,females)
+  save(firstNames, file="firstnames.RData")
   invisible(firstNames)
 }
 
