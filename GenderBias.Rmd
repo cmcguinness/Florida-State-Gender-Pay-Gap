@@ -1,6 +1,7 @@
 ---
 title: "Is there a Gender Pay Gap in the Florida's Government?"
-output: 
+output:
+  pdf_document: default
   html_document:
     theme: journal
 ---
@@ -170,9 +171,11 @@ Here is a histogram of the normalized salaries for men and women: it shows, in a
 
 ```{r detailed2,echo=FALSE, cache=TRUE}
 bias <- computeBias(sbc)
+```
+```{r detailed3,echo=FALSE, cache=TRUE}
 par(mfrow=c(1,2))
-hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="Normalized Salary")
-hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="Normalized Salary")
+hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="% of average in class")
+hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="% of average in class")
 ```
 
 If we  average all the men's normalized salary and all the of the women's normalized salary, this gives us a view
@@ -231,8 +234,8 @@ normalization is done against the average for all levels of a title:
 ```{r commondetailed2,echo=FALSE, cache=TRUE}
 bias <- computeBias(sbc)
 par(mfrow=c(1,2))
-hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="% of average in classification")
-hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="% of average in classification")
+hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="% of average in similar classes")
+hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="% of average in similar classes")
 ```
 
 The histogram doesn't give us an obvious answer, but by looking across all men
@@ -266,8 +269,8 @@ classBias <- computeLopsided(sbc)
 ```
 ```{r classBias1,echo=FALSE, cache=TRUE}
 par(mfrow=c(1,2))
-hist(classBias$Mens,main="Male Employees", xlim = c(0,200000), ylim=c(0,20000), breaks=30, xlab="Men's Salaries")
-hist(classBias$Womens,main="Female Employees",xlim = c(0,200000),ylim=c(0,20000), breaks=30, xlab="Women's Salaries")
+hist(classBias$Mens,main="\"Men's Jobs\"", xlim = c(0,200000), ylim=c(0,20000), breaks=30, xlab="Salary")
+hist(classBias$Womens,main="\"Women's Jobs\"",xlim = c(0,200000),ylim=c(0,20000), breaks=30, xlab="Salary")
 ```
 
 We can see that there's a strong bias between male dominated and female dominated
@@ -314,8 +317,7 @@ to the job.
 
 ----
 
-This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/) 
-![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png)
+This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
 Like this? Don't like this? Think you can do better? By all means!
 You can download, run, and modify the complete sources for this analysis on
