@@ -156,6 +156,12 @@ computeLopsided <- function (sbc) {
   # Some side effects ...
   lopsided.titles <<- character()
   lopsided.balance <<- integer()
+  lopsided.average <<- numeric()
+  lopsided.percent <<- numeric()
+  
+  # More side effects
+  individuals.salary <<- numeric()
+  individuals.pcWomen <<- numeric()
   
   # Look at each title ....
   for (i in seq_along(sbc$titles)) {
@@ -167,6 +173,7 @@ computeLopsided <- function (sbc) {
     
     lopsided.titles <<- c(lopsided.titles, sbc$titles[i])
     lopsided.balance <<- c(lopsided.balance, numWomen-numMen)
+    lopsided.average <<- c(lopsided.average, mean(c(sbc$females[[i]], sbc$males[[i]], sbc$others[[i]])))
     
     total <- numMen + numWomen
     
@@ -176,6 +183,12 @@ computeLopsided <- function (sbc) {
     if (is.nan(pcMen)) pcMen = 0
     if (is.nan(pcWomen)) pcWomen =0
 
+    lopsided.percent <<- c(lopsided.percent, pcWomen)
+    
+    for (s in c(sbc$females[[i]], sbc$males[[i]], sbc$others[[i]])) {
+      individuals.salary <<- c(individuals.salary, s)
+      individuals.pcWomen <<- c(individuals.pcWomen, pcWomen)
+    }
     
     if (pcWomen > threshold) {
       for (salary in sbc$females[[i]]) {

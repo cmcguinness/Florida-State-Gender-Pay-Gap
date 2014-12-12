@@ -168,7 +168,7 @@ and see if, out of these larger pools, women were paid less than men.
 ```{r commondetailed1,echo=FALSE, cache=TRUE}
 source('titleShrink.R')
 commonTitles <- titleShrink(coreSalaries)
-sbc <- salaryByClass(commonTitles)
+sbc2 <- salaryByClass(commonTitles)
 ```
 Let's run the same analysis, but this time consider all I, II, III, etc. jobs to
 be the same basic job.  Is there a bias to be found because women are in lower levels?
@@ -177,7 +177,7 @@ Here is the distribution of normalized salaries for men and women, when the
 normalization is done against the average for all levels of a title:
 
 ```{r commondetailed2,echo=FALSE, cache=TRUE}
-bias <- computeBias(sbc)
+bias <- computeBias(sbc2)
 par(mfrow=c(1,2))
 hist(bias$Mens*100,main="Male Employees",  breaks=30, xlab="% of average in similar classes")
 hist(bias$Womens*100,main="Female Employees", breaks=30, xlab="% of average in similar classes")
@@ -244,16 +244,39 @@ What are the most heavily male and heavily female job categories?
 
 ```{r topcats, echo=FALSE, message=FALSE}
 pander(
-data.frame(Top_Womens=head(lopsided.titles[order(-lopsided.balance)], n=10),
-           Top_Mens=head(lopsided.titles[order(lopsided.balance)], n=10)),
+data.frame(Top_Womens=head(lopsided.titles[order(-lopsided.balance)], n=5),
+           Top_Mens=head(lopsided.titles[order(lopsided.balance)], n=5)),
 justify=c("left", "left")
 )
 ```
+
+(Note that the job description for "VOCATIONAL INSTRUCTOR III - F/C" is 
+"this is a maintenance heating, air conditioning, and refrigeration service and 
+repair position supervising an inmate work crew")
 
 It seems that much of the discrepency can be attributed to the heavily
 male presence in law enforcement jobs.  This appears to be an example of the
 [danger wage premium](http://en.wikipedia.org/wiki/Male%E2%80%93female_income_disparity_in_the_United_States#Danger_wage_premium)
 concept, even if that concept is not settled fact.
+
+When you look at the job classifications over all, sorted by the percent of women in the role,
+we can see a subtle lowering of the salaries as we move from left (all men)
+to right (all women):
+```{r balancevsalary, echo=FALSE, message=FALSE}
+lp <- lopsided.percent*100
+plot(lp,lopsided.average, xlab="% Women in Job", ylab="Average Salary", col=rgb(0,0,0,0.25))
+abline(lm(lopsided.average ~ lp))
+```
+
+```{r bvs2, echo=FALSE, message=FALSE}
+individuals.pcWomen <- individuals.pcWomen * 100
+plot(individuals.pcWomen,individuals.salary, xlab="% Women in Job", ylab="Salary", pch=20, col=rgb(.5,.5,.5,0.10))
+abline(lm(individuals.salary ~ individuals.pcWomen), lwd=3)
+```
+
+The line through the data is the linear regression,
+The one outlier in the upper right hand corner is Pamela L. Steward, Commissioner of Education,
+whose salary is $276,000 per year.  And since she's the only one in that spot, it's 100% female...
 
 \newpage
 
